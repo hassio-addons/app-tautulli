@@ -32,10 +32,10 @@ RUN \
   && git clone --branch "${TAUTULLI_VERSION}" --depth=1 \
     https://github.com/Tautulli/Tautulli.git /opt \
   \
-  && find /usr/local \
-    \( -type d -a -name test -o -name tests -o -name '__pycache__' \) \
-    -o \( -type f -a -name '*.pyc' -o -name '*.pyo' \) \
-    -exec rm -rf '{}' + \
+  && find /usr/local \( \
+      \( -type d -a \( -name test -o -name tests -o -name '__pycache__' \) \) \
+      -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) \
+    \) -exec rm -rf '{}' + \
   \
   && apt-get purge -y --auto-remove \
     git \
