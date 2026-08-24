@@ -1,7 +1,7 @@
 #!/command/with-contenv bashio
 # shellcheck shell=bash
 # ==============================================================================
-# Home Assistant Community Add-on: Tautulli
+# Home Assistant Community App: Tautulli
 # Preparing configuration for Tautulli
 # ==============================================================================
 readonly ADDON=/data/addon.ini
