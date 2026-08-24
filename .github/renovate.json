@@ -3,7 +3,7 @@
   "extends": ["helpers:pinGitHubActionDigests"],
   "rebaseWhen": "behind-base-branch",
   "dependencyDashboard": true,
-  "labels": ["dependencies", "no-stale"],
+  "labels": ["dependencies"],
   "commitMessagePrefix": "⬆️",
   "commitMessageTopic": "{{depName}}",
   "customManagers": [
@@ -65,11 +65,6 @@
     {
       "matchManagers": ["pip_requirements"],
       "addLabels": ["python"]
-    },
-    {
-      "matchManagers": ["pip_requirements"],
-      "matchDepTypes": ["dev"],
-      "rangeStrategy": "pin"
     },
     {
       "matchManagers": ["pip_requirements"],

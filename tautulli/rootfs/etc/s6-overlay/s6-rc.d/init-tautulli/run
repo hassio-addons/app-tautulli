@@ -22,12 +22,18 @@ mkdir -p /backup/tautulli
 
 bashio::log.info "Updating running configuration..."
 
-# Temporrary changing config.ini to be valid during additions
+# Temporarily changing config.ini to be valid during additions
 ## This has to be done because Tautulli added a ini header with [[header]]
+## bashio enables errexit, so restore the header on any exit path, otherwise
+## a failure in between would leave the user's config.ini malformed.
+restore_header() {
+    sed -i "s/\\[get_file_sizes_hold\\]/\\[\\[get_file_sizes_hold\\]\\]/" "$CONFIG"
+}
 sed -i "s/\\[\\[get_file_sizes_hold\\]\\]/\\[get_file_sizes_hold\\]/" "$CONFIG"
+trap restore_header EXIT
 
-# Set spesific config if an upgrade
-if ! bashio::fs.file_exists "/data/addon.ini"; then
+# Set specific config if an upgrade
+if ! bashio::fs.file_exists "$ADDON"; then
     crudini --set "$ADDON" Addon version "0"
 fi
 CURRENT_VERSION=$(crudini --get "$ADDON" Addon version)
@@ -43,7 +49,3 @@ fi
 crudini --set "$ADDON" Addon version "$TAUTULLI_VERSION"
 crudini --set "$CONFIG" General check_github 0
 crudini --set "$CONFIG" General check_github_on_startup 0
-
-# Changing config.ini back.
-## This has to be done because Tautulli added a ini header with [[header]]
-sed -i "s/\\[get_file_sizes_hold\\]/\\[\\[get_file_sizes_hold\\]\\]/" "$CONFIG"
