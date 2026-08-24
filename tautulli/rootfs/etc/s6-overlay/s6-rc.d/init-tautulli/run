@@ -7,9 +7,6 @@
 readonly ADDON=/data/addon.ini
 readonly CONFIG=/data/config.ini
 
-# Check SSL cerrificate
-bashio::config.require.ssl
-
 # If config.ini does not exist, create it.
 if ! bashio::fs.file_exists "$CONFIG"; then
     bashio::log.info "Creating default configuration..."
