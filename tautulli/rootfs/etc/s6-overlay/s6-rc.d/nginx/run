@@ -2,11 +2,9 @@
 # shellcheck shell=bash
 # ==============================================================================
 # Home Assistant Community Add-on: Tautulli
-# Runs Tautulli
+# Runs the Home Assistant Ingress reverse proxy
 # ==============================================================================
-bashio::log.info "Starting Tautulli..."
-exec \
-  python3 /opt/Tautulli.py \
-    --datadir /data \
-    --nolaunch \
-    -p 8182
+bashio::net.wait_for 8182 localhost 300
+bashio::log.info "Starting Ingress proxy..."
+mkdir -p /var/log/nginx
+exec nginx -c /run/tautulli-nginx.conf -g "daemon off;"

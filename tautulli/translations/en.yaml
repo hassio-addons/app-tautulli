@@ -1,36 +1,30 @@
 ---
 configuration:
+  api_access:
+    name: Enable Home Assistant API access
+    description: >-
+      Allows Home Assistant Core to reach only Tautulli's API endpoint over the
+      internal app network. Requests still require the Tautulli API key, and
+      direct web access remains controlled by the ingress-only setting.
+  disable_authentication:
+    name: Use Home Assistant Ingress only
+    description: >-
+      Uses Home Assistant authentication and blocks direct access on port 8181.
+      Disable this option and configure both credentials only when authenticated
+      direct access is required.
+  authentication_username:
+    name: Authentication username
+    description: >-
+      Required when direct-access authentication is enabled. This protects port
+      8181 while Ingress continues to use Home Assistant authentication.
+  authentication_password:
+    name: Authentication password
+    description: >-
+      Required when direct-access authentication is enabled. Change it in the
+      add-on options; Tautulli cannot override the proxy authentication.
   log_level:
     name: Log level
     description: >-
       Controls the level of log details the add-on provides.
-  username:
-    name: Username
-    description: >-
-      The username for authenticating with the web interface.
-  password:
-    name: Password
-    description: >-
-      The password for authenticating with the web interface.
-  ssl:
-    name: SSL
-    description: >-
-      Enables/Disables SSL (HTTPS) on the web interface.
-  certfile:
-    name: Certificate file
-    description: >-
-      The certificate file to use for SSL. Note that this file must
-      exist in the /ssl/ folder.
-  keyfile:
-    name: Private key file
-    description: >-
-      The private key file to use for SSL. Note that this file must
-      exist in the /ssl/ folder.
-  leave_front_door_open:
-    name: Leave front door open
-    description: >-
-      When enabled, this option disables the username/password authentication
-      on the add-on. It is STRONGLY suggested not to use this option.
-      USE AT YOUR OWN RISK!
 network:
   8181/tcp: Web interface

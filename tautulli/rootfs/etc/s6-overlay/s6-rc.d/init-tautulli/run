@@ -6,6 +6,10 @@
 # ==============================================================================
 readonly ADDON=/data/addon.ini
 readonly CONFIG=/data/config.ini
+readonly DIRECT_AUTH_FILE=/run/tautulli.htpasswd
+readonly NGINX_CONFIG=/run/tautulli-nginx.conf
+readonly NGINX_TEMPLATE=/etc/nginx/nginx.conf
+readonly WELCOME_TEMPLATE=/opt/data/interfaces/default/welcome.html
 
 # Check SSL cerrificate
 bashio::config.require.ssl
@@ -24,6 +28,7 @@ fi
 mkdir -p /backup/tautulli
 
 bashio::log.info "Updating running configuration..."
+cp "$NGINX_TEMPLATE" "$NGINX_CONFIG"
 
 # Temporrary changing config.ini to be valid during additions
 ## This has to be done because Tautulli added a ini header with [[header]]
@@ -47,6 +52,107 @@ crudini --set "$ADDON" Addon version "$TAUTULLI_VERSION"
 crudini --set "$CONFIG" General check_github 0
 crudini --set "$CONFIG" General check_github_on_startup 0
 
+# NGINX replaces this internal root with each request's Home Assistant Ingress
+# path. Direct access is rewritten back to root.
+crudini --set "$CONFIG" General http_proxy 1
+crudini --set "$CONFIG" General http_host "127.0.0.1"
+crudini --set "$CONFIG" General http_root "/ingress"
+
+# Authentication is enforced by Home Assistant for Ingress and, when enabled,
+# by NGINX for direct access. Keeping it disabled inside Tautulli prevents its
+# runtime settings from weakening either boundary or causing a second login.
+crudini --set "$CONFIG" General http_basic_auth 0
+crudini --set "$CONFIG" General http_password ""
+crudini --set "$CONFIG" General http_plex_admin 0
+crudini --set "$CONFIG" General http_username ""
+
+# Remove the redundant authentication card from Tautulli's first-run wizard.
+# Removing the markup is more reliable than disabling the card in JavaScript
+# and ensures its inputs cannot be submitted accidentally.
+sed -i \
+  '/<div class="wizard-card" data-cardname="card2">/,/<div class="wizard-card" data-cardname="card3">/{ /<div class="wizard-card" data-cardname="card3">/!d; }' \
+  "$WELCOME_TEMPLATE"
+if grep -q 'data-cardname="card2"' "$WELCOME_TEMPLATE"; then
+    bashio::log.fatal "Failed to remove Tautulli authentication from first-run setup."
+    exit 1
+fi
+
+if ! bashio::config.has_value "disable_authentication" \
+    || bashio::config.true "disable_authentication"; then
+    bashio::log.info "Using Home Assistant Ingress authentication..."
+    rm -f "$DIRECT_AUTH_FILE"
+    sed -i \
+      's/# %%ACCESS_CONTROL%%/allow 172.30.32.2; deny all;/' \
+      "$NGINX_CONFIG"
+    sed -i '/# %%DIRECT_AUTHENTICATION%%/d' "$NGINX_CONFIG"
+else
+    AUTHENTICATION_USERNAME=""
+    AUTHENTICATION_PASSWORD=""
+    if bashio::config.has_value "authentication_username"; then
+        AUTHENTICATION_USERNAME="$(bashio::config 'authentication_username')"
+    fi
+    if bashio::config.has_value "authentication_password"; then
+        AUTHENTICATION_PASSWORD="$(bashio::config 'authentication_password')"
+    fi
+
+    if bashio::var.has_value "$AUTHENTICATION_USERNAME" \
+        && bashio::var.has_value "$AUTHENTICATION_PASSWORD"; then
+        bashio::log.info "Enabling authenticated direct access on port 8181..."
+
+        DIRECT_PASSWORD_HASH="$(
+          printf '%s' "$AUTHENTICATION_PASSWORD" \
+            | openssl passwd -6 -stdin
+        )"
+
+        printf '%s:%s\n' \
+          "$AUTHENTICATION_USERNAME" "$DIRECT_PASSWORD_HASH" \
+          > "$DIRECT_AUTH_FILE"
+        chmod 0600 "$DIRECT_AUTH_FILE"
+
+        sed -i \
+          's/# %%ACCESS_CONTROL%%/satisfy any; allow 172.30.32.2; deny all;/' \
+          "$NGINX_CONFIG"
+        sed -i \
+          's|# %%DIRECT_AUTHENTICATION%%|auth_basic "Tautulli"; auth_basic_user_file /run/tautulli.htpasswd;|' \
+          "$NGINX_CONFIG"
+    else
+        bashio::log.warning \
+          "Authentication is enabled, but its username or password is missing."
+        bashio::log.warning \
+          "Direct access remains blocked; Home Assistant Ingress is still available."
+        rm -f "$DIRECT_AUTH_FILE"
+        sed -i \
+          's/# %%ACCESS_CONTROL%%/allow 172.30.32.2; deny all;/' \
+          "$NGINX_CONFIG"
+        sed -i '/# %%DIRECT_AUTHENTICATION%%/d' "$NGINX_CONFIG"
+    fi
+fi
+
+# Home Assistant Core and apps share this internal network. When enabled, only
+# Tautulli's API endpoint is reachable from it; the API key remains mandatory.
+if ! bashio::config.has_value "api_access" \
+    || bashio::config.true "api_access"; then
+    bashio::log.info "Enabling Tautulli API access for Home Assistant..."
+    sed -i \
+      's/# %%API_ACCESS_CONTROL%%/allow 172.30.32.0\/23; deny all;/' \
+      "$NGINX_CONFIG"
+else
+    bashio::log.info "Tautulli API access for Home Assistant is disabled."
+    sed -i \
+      's/# %%API_ACCESS_CONTROL%%/deny all;/' \
+      "$NGINX_CONFIG"
+fi
+
 # Changing config.ini back.
 ## This has to be done because Tautulli added a ini header with [[header]]
 sed -i "s/\\[get_file_sizes_hold\\]/\\[\\[get_file_sizes_hold\\]\\]/" "$CONFIG"
+
+if grep -Eq '%%(ACCESS_CONTROL|API_ACCESS_CONTROL|DIRECT_AUTHENTICATION)%%' "$NGINX_CONFIG"; then
+    bashio::log.fatal "Failed to configure the Ingress proxy access controls."
+    exit 1
+fi
+
+if ! nginx -t -c "$NGINX_CONFIG"; then
+    bashio::log.fatal "Generated Ingress proxy configuration is invalid."
+    exit 1
+fi

@@ -4,20 +4,40 @@
 
 [![Discord][discord-shield]][discord] [![Community Forum][forum-shield]][forum]
 
-Monitoring and tracking tool for Plex Media Server.
+Monitor, understand, and get notified about activity on your Plex Media Server.
 
 ![Screenshot][screenshot]
 
 ## About
 
-Tautulli is an application that you can run alongside your Plex Media Server
-to monitor activity, and track various statistics.
+Tautulli is a web application for monitoring, analytics, and notifications for
+[Plex Media Server][plex]. This add-on packages Tautulli so it can run alongside
+Home Assistant and open directly from the Home Assistant sidebar.
 
-Most importantly, these statistics include what has been watched,
-who watched it, when and where they watched it, and how it was watched.
+With Tautulli you can:
 
-All statistics are presented in a nice and clean interface with many tables and
-graphs, which makes it easy to brag about your server to everyone else.
+- Monitor current Plex streams, including users, devices, quality, and location.
+- Explore watch history and detailed statistics for users and libraries.
+- View configurable graphs, popular content, and server activity trends.
+- Send customizable notifications for playback activity and newly added media.
+- Use a responsive interface on desktop, tablet, and mobile browsers.
+
+## Before you install
+
+- A working Plex Media Server is required; this add-on does not include Plex.
+- The first start can take a few minutes while Tautulli is initialized.
+- Tautulli guides you through connecting to Plex when you first open the Web UI.
+- Home Assistant Ingress is used by default. Direct access on port `8181` is
+  enabled only when `disable_authentication` is `false` and both authentication
+  credentials are configured. Otherwise, use Home Assistant Ingress. NGINX
+  enforces direct credentials independently of Tautulli's settings.
+- Home Assistant Core can access Tautulli's API over the private app network;
+  the web interface remains protected by Home Assistant Ingress.
+
+This add-on stores its Tautulli configuration and database in the add-on data
+directory, where they are included in Home Assistant add-on backups.
+
+[:books: Read the full add-on documentation][docs]
 
 {% if channel == "edge" %}
 ## WARNING! THIS IS AN EDGE VERSION!
@@ -63,6 +83,8 @@ If you are more interested in stable releases of our add-ons:
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg
 [forum]: https://community.home-assistant.io/t/home-assistant-community-add-on-tautulli/68745
 [maintenance-shield]: https://img.shields.io/maintenance/yes/2025.svg
+[docs]: https://github.com/hassio-addons/addon-tautulli/blob/main/tautulli/DOCS.md
+[plex]: https://www.plex.tv/media-server-downloads/
 [project-stage-shield]: https://img.shields.io/badge/project%20stage-production%20ready-brightgreen.svg
 [release-shield]: https://img.shields.io/badge/version-{{ version }}-blue.svg
 [release]: {{ repo }}/tree/{{ version }}

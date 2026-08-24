@@ -4,7 +4,7 @@ FROM ${BUILD_FROM}
 
 ENV \
   PIP_BREAK_SYSTEM_PACKAGES=1 \
-  TAUTULLI_VERSION="v2.16.0"
+  TAUTULLI_VERSION="v2.17.2"
 
 # Set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -22,11 +22,13 @@ RUN \
   && apt-get install -y --no-install-recommends \
     build-essential=12.12 \
     git=1:2.47.3-0+deb13u1 \
+    nginx-full=1.26.3-3+deb13u7 \
+    openssl=3.5.6-1~deb13u2 \
     python3-dev=3.13.5-1 \
     python3-pip=25.1.1+dfsg-1 \
     python3=3.13.5-1 \
   \
-  && pip install \
+  && python3 -m pip install \
     --no-cache-dir \
     --prefer-binary \
     --extra-index-url "https://www.piwheels.org/simple" \
