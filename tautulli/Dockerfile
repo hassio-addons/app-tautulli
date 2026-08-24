@@ -20,16 +20,13 @@ ARG BUILD_ARCH=amd64
 RUN \
   apt-get update \
   && apt-get install -y --no-install-recommends \
-    build-essential=12.12 \
     git=1:2.47.3-0+deb13u1 \
-    python3-dev=3.13.5-1 \
     python3-pip=25.1.1+dfsg-1 \
     python3=3.13.5-1 \
   \
   && pip install \
     --no-cache-dir \
     --prefer-binary \
-    --extra-index-url "https://www.piwheels.org/simple" \
     -r /tmp/requirements.txt \
   \
   && git clone --branch "${TAUTULLI_VERSION}" --depth=1 \
@@ -41,9 +38,7 @@ RUN \
     -exec rm -rf '{}' + \
   \
   && apt-get purge -y --auto-remove \
-    build-essential \
     git \
-    python3-dev \
     python3-pip \
   \
   && rm -fr \
