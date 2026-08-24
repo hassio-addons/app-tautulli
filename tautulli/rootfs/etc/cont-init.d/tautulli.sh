@@ -1,1 +1,0 @@
-#!/command/with-contenv bashio

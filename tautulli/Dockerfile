@@ -16,7 +16,6 @@ WORKDIR /opt
 COPY requirements.txt /tmp/
 
 # Setup base
-ARG BUILD_ARCH=amd64
 RUN \
   apt-get update \
   && apt-get install -y --no-install-recommends \
